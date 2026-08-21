@@ -14,8 +14,10 @@ export const siteConfig = {
   shortDescription:
     "CCTV, Computers, Laptops, Networking & IT Services — Sales, Installation and Support.",
 
-  // PLACEHOLDER: replace with the real production domain before launch.
-  domain: "https://www.techdepo.example",
+  // Live on techdepo.vercel.app for now. Replace with a custom domain
+  // (e.g. https://www.techdepo.in) once one is purchased, and re-point the
+  // Vercel project's Domains setting to match.
+  domain: "https://techdepo.vercel.app",
 
   // Primary contact (used by header/hero/floating WhatsApp button). Both
   // named contacts are listed in full on the Contact page and footer — see

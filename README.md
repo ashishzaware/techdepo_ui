@@ -9,8 +9,10 @@ Real business info is wired in: phone/WhatsApp numbers (Ashish & Yogesh), email,
 (Ahmednagar — primary, and Pimpri), GSTIN, Instagram, the real logo (favicon/header/footer/social
 share image), and 4 genuine customer reviews. Still placeholder — **before going live**:
 
-1. **Production domain** and **Google Business Profile review link** in `src/config/site.ts`
-   (search for `PLACEHOLDER` comments).
+1. **Google Business Profile review link** in `src/config/site.ts` (search for the
+   `PLACEHOLDER` comment). The site is live at https://techdepo.vercel.app — attach a real
+   custom domain whenever one is purchased (see **Deployment** below) and update `domain` in
+   `src/config/site.ts` to match.
 2. **`src/data/projects.ts`** — still 6 clearly-labeled `[Sample]` placeholder projects; replace
    with real completed projects (real project photos aren't wired in yet either — see the
    `ProjectCard`/`image.placeholder` note in that file).
@@ -140,5 +142,5 @@ here since it needs a site key that didn't exist yet.
 
 Search the codebase for these markers before launch:
 
-- `PLACEHOLDER` comments in `src/config/site.ts` (production domain, Google review link)
+- `PLACEHOLDER` comment in `src/config/site.ts` (Google review link)
 - `[Sample]`-prefixed titles in `src/data/projects.ts`
