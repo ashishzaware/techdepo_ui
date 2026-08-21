@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+
+  /* Brand: deep navy (trust, technology) */
+  --brand-950: #071427;
+  --brand-900: #0b1f3a;
+  --brand-800: #102a4f;
+  --brand-700: #14356a;
+  --brand-600: #1a4585;
+  --brand-500: #2563eb;
+
+  /* Accent: amber, used sparingly for primary CTAs */
+  --accent-500: #f59e0b;
+  --accent-600: #d97706;
+  /* Darker text-safe variant — accent-500/600 fail WCAG AA as text on white */
+  --accent-700: #b45309;
+
+  /* Reserved exclusively for WhatsApp elements. Deeper than the official
+     WhatsApp brand green so white text/icons on it meet WCAG AA contrast. */
+  --whatsapp: #15803d;
+  --whatsapp-dark: #14532d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-950: var(--brand-950);
+  --color-brand-900: var(--brand-900);
+  --color-brand-800: var(--brand-800);
+  --color-brand-700: var(--brand-700);
+  --color-brand-600: var(--brand-600);
+  --color-brand-500: var(--brand-500);
+
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-dark: var(--whatsapp-dark);
+
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Visible focus states for keyboard navigation, on top of Tailwind's focus-visible utilities */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
