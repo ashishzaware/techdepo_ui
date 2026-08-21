@@ -1,6 +1,7 @@
 "use server";
 
-import { sendEnquiryEmail } from "@/lib/email";
+import { sendEnquiryEmail, sendCustomerThankYouEmail } from "@/lib/email";
+import { sendOwnerWhatsAppAlert, sendCustomerThankYouWhatsApp } from "@/lib/whatsappBusiness";
 import {
   isNonEmpty,
   isValidEmail,
@@ -25,6 +26,53 @@ function isLikelySpam(formData: FormData): boolean {
   if (!startedAt) return false;
   const elapsed = Date.now() - startedAt;
   return elapsed < 1500;
+}
+
+/**
+ * Fires every notification channel for a new enquiry: business email,
+ * business WhatsApp alert, and (if the customer gave contact details)
+ * a "thank you, we'll connect shortly" reply by email and WhatsApp.
+ *
+ * Each channel is independent and failure-isolated — e.g. a WhatsApp API
+ * hiccup never stops the business email from going out, and none of these
+ * failures should surface as a failed submission to the customer, since
+ * their enquiry was already validated and accepted.
+ */
+async function dispatchNotifications(params: {
+  enquiryType: string;
+  emailSubject: string;
+  emailLines: Array<[label: string, value: string | undefined]>;
+  customerName: string;
+  customerMobile: string;
+  customerEmail?: string;
+  whatsappSummary: string;
+}): Promise<void> {
+  const tasks: Array<Promise<void>> = [
+    sendEnquiryEmail({ subject: params.emailSubject, lines: params.emailLines }),
+    sendOwnerWhatsAppAlert({
+      enquiryType: params.enquiryType,
+      customerName: params.customerName,
+      customerMobile: params.customerMobile,
+      summary: params.whatsappSummary,
+    }),
+    sendCustomerThankYouWhatsApp({
+      customerName: params.customerName,
+      customerMobile: params.customerMobile,
+    }),
+  ];
+
+  if (params.customerEmail) {
+    tasks.push(
+      sendCustomerThankYouEmail({ to: params.customerEmail, customerName: params.customerName }),
+    );
+  }
+
+  const results = await Promise.allSettled(tasks);
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.error("[notifications] a notification channel failed:", result.reason);
+    }
+  }
 }
 
 export async function submitSalesEnquiry(
@@ -56,9 +104,10 @@ export async function submitSalesEnquiry(
     return { success: true, message: "Thank you! Our team will contact you shortly." };
   }
 
-  await sendEnquiryEmail({
-    subject: `New Sales Enquiry — ${productOrService}`,
-    lines: [
+  await dispatchNotifications({
+    enquiryType: "Sales",
+    emailSubject: `New Sales Enquiry — ${productOrService}`,
+    emailLines: [
       ["Full Name", fullName],
       ["Mobile", mobile],
       ["Email", email],
@@ -69,6 +118,10 @@ export async function submitSalesEnquiry(
       ["Preferred Contact Method", preferredContactMethod],
       ["Message", message],
     ],
+    customerName: fullName,
+    customerMobile: mobile,
+    customerEmail: email || undefined,
+    whatsappSummary: `${productOrService} — ${requirement}`,
   });
 
   return { success: true, message: "Thank you! Our team will contact you shortly." };
@@ -104,9 +157,10 @@ export async function submitServiceEnquiry(
     return { success: true, message: "Thank you! Our team will contact you shortly." };
   }
 
-  await sendEnquiryEmail({
-    subject: `New Service Request — ${deviceType}`,
-    lines: [
+  await dispatchNotifications({
+    enquiryType: "Service",
+    emailSubject: `New Service Request — ${deviceType}`,
+    emailLines: [
       ["Customer Name", customerName],
       ["Mobile", mobile],
       ["Email", email],
@@ -117,6 +171,10 @@ export async function submitServiceEnquiry(
       ["Preferred Service Date", preferredServiceDate],
       ["Message", message],
     ],
+    customerName,
+    customerMobile: mobile,
+    customerEmail: email || undefined,
+    whatsappSummary: `${deviceType} — ${problem}`,
   });
 
   return { success: true, message: "Thank you! Our team will contact you shortly." };
@@ -145,14 +203,19 @@ export async function submitContact(
     return { success: true, message: "Thank you! We'll get back to you shortly." };
   }
 
-  await sendEnquiryEmail({
-    subject: "New Contact Form Message",
-    lines: [
+  await dispatchNotifications({
+    enquiryType: "Contact",
+    emailSubject: "New Contact Form Message",
+    emailLines: [
       ["Name", name],
       ["Mobile", mobile],
       ["Email", email],
       ["Message", message],
     ],
+    customerName: name,
+    customerMobile: mobile,
+    customerEmail: email || undefined,
+    whatsappSummary: message,
   });
 
   return { success: true, message: "Thank you! We'll get back to you shortly." };

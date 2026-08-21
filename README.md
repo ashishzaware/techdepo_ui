@@ -74,9 +74,75 @@ runs without any of them:
 | `ENQUIRY_TO_EMAIL` | Where enquiry notifications are sent. Defaults to `siteConfig.email`. |
 | `RESEND_FROM_EMAIL` | Verified sender address for outgoing enquiry emails. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 ID. Analytics only loads if this is set. |
+| `WHATSAPP_ACCESS_TOKEN` | Meta permanent access token. Enables WhatsApp notifications — see **WhatsApp Business API Setup** below. |
+| `WHATSAPP_PHONE_NUMBER_ID` | Phone Number ID from Meta's WhatsApp API Setup page. |
+| `WHATSAPP_TEMPLATE_ALERT` | Approved template name for the business-side "new enquiry" alert. Default: `new_enquiry_alert`. |
+| `WHATSAPP_TEMPLATE_THANK_YOU` | Approved template name for the customer "thank you" reply. Default: `enquiry_thank_you`. |
+| `WHATSAPP_ALERT_NUMBERS` | Optional comma-separated override for who gets the owner alert. Defaults to every number in `siteConfig.contacts`. |
 
 Set the same variables in your hosting provider's dashboard for production — never commit real
 values to `.env.local` or `.env`.
+
+## WhatsApp Business API Setup
+
+Every enquiry form (`/sales-enquiry`, `/service-enquiry`, `/contact`) already calls out to
+WhatsApp on submission — see `src/lib/whatsappBusiness.ts`, wired in via `dispatchNotifications`
+in `src/lib/actions.ts`. Until you complete the steps below, those calls are no-ops that log to
+the server console — nothing breaks, email notifications (once `RESEND_API_KEY` is set) keep
+working independently.
+
+What it does once configured:
+- **Business alert** — every new enquiry sends a WhatsApp message to each number in
+  `siteConfig.contacts` (currently Ashish and Yogesh).
+- **Customer auto-reply** — the customer's own WhatsApp number (the mobile they submitted) gets
+  a "thank you, we'll connect shortly" message automatically.
+
+This requires Meta's official **WhatsApp Business Platform (Cloud API)** — there is no free way
+to send automated WhatsApp messages without it, and Meta requires pre-approved message templates
+for any message a business sends first (not started by the customer). Steps:
+
+1. **Create a Meta Business Account** at [business.facebook.com](https://business.facebook.com) if
+   you don't have one, and verify your business.
+2. **Create an app** at [developers.facebook.com](https://developers.facebook.com/apps) → add the
+   **WhatsApp** product to it.
+3. **Add a phone number.** Meta gives you a free test number to start with (fine for testing, but
+   it can only message a handful of verified test recipients). For production, add and verify a
+   real number under WhatsApp → API Setup → Add Phone Number. Note: a number actively used in the
+   regular consumer WhatsApp app can't easily also be used here — if you want to keep using the
+   regular WhatsApp app on your existing numbers, use a spare/new number for this integration
+   instead.
+4. **Generate a permanent access token.** In Meta Business Settings → Users → System Users, create
+   a System User, assign it to your WhatsApp app with `whatsapp_business_messaging` permission,
+   and generate a token with no expiry. This is your `WHATSAPP_ACCESS_TOKEN`.
+5. **Copy the Phone Number ID** from WhatsApp → API Setup (not the phone number itself — it's a
+   numeric ID). This is your `WHATSAPP_PHONE_NUMBER_ID`.
+6. **Create and submit two message templates** in WhatsApp Manager → Account Tools → Message
+   Templates → Create Template. Use these exact settings so the code above matches without
+   further changes:
+
+   **Template 1 — `new_enquiry_alert`** (Category: Utility, Language: English)
+   ```
+   New {{1}} enquiry from {{2}} ({{3}}). Details: {{4}}
+   ```
+   Example values when submitting: `Sales`, `Ramesh Kumar`, `9876543210`, `CCTV Camera — need 4 cameras for shop`
+
+   **Template 2 — `enquiry_thank_you`** (Category: Utility, Language: English)
+   ```
+   Hi {{1}}, thank you for reaching out to TechDepo! We've received your enquiry and our team will connect with you shortly.
+   ```
+   Example value: `Ramesh Kumar`
+
+   Utility-category templates are reviewed faster than marketing ones and usually approve within
+   a few hours.
+7. **Add the environment variables** (`WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and
+   the two template names if you used different ones) to Vercel → Project Settings → Environment
+   Variables, then redeploy.
+
+Meta's Cloud API has a free monthly conversation allowance, then charges per conversation after
+that — pricing depends on your business's country; check
+[Meta's WhatsApp pricing page](https://developers.facebook.com/docs/whatsapp/pricing) for current
+rates. For a small local business's enquiry volume, this typically stays within or close to the
+free tier.
 
 ## Deployment (Vercel — recommended, ₹0/month to start)
 
