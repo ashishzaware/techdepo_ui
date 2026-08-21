@@ -118,8 +118,9 @@ project as-is.
 - `LocalBusiness` and `Service` structured data (JSON-LD) is generated from `src/config/site.ts`
   and `src/data/services.ts` — see `src/lib/structuredData.ts`. Update the config file and the
   structured data updates automatically.
-- A branded favicon, Apple touch icon, and Open Graph share image are generated at build time
-  from `src/app/icon.tsx`, `apple-icon.tsx`, and `opengraph-image.tsx`.
+- The favicon (`src/app/icon.png`) and Apple touch icon (`src/app/apple-icon.png`) are generated
+  from the real logo at `/public/logo.png`. The Open Graph share image
+  (`src/app/opengraph-image.tsx`) embeds that same logo at request time.
 - Once real content is set, submit the site to
   [Google Search Console](https://search.google.com/search-console) and verify ownership.
 
